@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Formalizer</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Formalized Text</h2>
+        <div class="textarea-container">
+            <textarea id="formalizedText" readonly></textarea>
+            <div id="loadingIndicator" class="loading-indicator">
+                <div class="spinner"></div>
+                <div>Formalizing...</div>
+            </div>
+        </div>
+        <div class="buttons">
+            <button id="copyBtn">Copy</button>
+            <button id="applyBtn">Apply Changes</button>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
