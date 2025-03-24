@@ -5,29 +5,34 @@ document.addEventListener("DOMContentLoaded", async function () {
     const applyBtn = document.getElementById("applyBtn");
     const loadingIndicator = document.getElementById("loadingIndicator");
     
-    // First, check if we have a stored formalized text result
+    // Show the popup immediately with the original text while processing
     chrome.storage.local.get(["formalizedResult", "selectedText"], async (data) => {
         // If we have a previous result, show it
         if (data.formalizedResult) {
             textarea.value = data.formalizedResult;
             loadingIndicator.style.display = "none";
         } 
-        // If we have a selected text but no formalized result yet, process it
-        else if (data.selectedText && !data.formalizedResult) {
-            // Show loading state 
-            loadingIndicator.style.display = "flex";
+        // If we have selected text but no formalized result yet
+        else if (data.selectedText) {
+            // Show the original text immediately for better UX
+            textarea.value = data.selectedText;
             
-            const selectedText = data.selectedText;
-            console.log("Selected Text:", selectedText);
+            // Show loading indicator at the top of popup
+            loadingIndicator.style.display = "flex";
+            loadingIndicator.innerText = "Formalizing text...";
+            
+            console.log("Selected Text:", data.selectedText);
             console.log("🚀 Preparing to send API request...");
-        
+            
             try {
                 const requestBody = {
-                    model: "deepseek/deepseek-r1:free",
-                    messages: [{ role: "user", content: `Make this more formal with minimal changes (no need to use unusual words). Do not change words unless necessary. If there are any errors on the sentence also fix them. Only give me the plain text of the sentence.: ${selectedText}` }]
+                    messages: [{ 
+                        role: "user", 
+                        content: `Make this more formal with minimal changes (no need to use unusual words). Do not change words unless necessary. If there are any errors on the sentence also fix them. Only give me the plain text of the sentence.: ${data.selectedText}` 
+                    }]
                 };
         
-                console.log("📡 Sending API Request:", requestBody);
+                console.log("📡 Sending API Request");
         
                 const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
@@ -37,36 +42,42 @@ document.addEventListener("DOMContentLoaded", async function () {
                     },
                     body: JSON.stringify({
                         model: "mistralai/mistral-7b-instruct:free",
-                        messages: requestBody.messages, // Ensure requestBody follows OpenAI's Chat API format
+                        messages: requestBody.messages,
                         extra_body: {}
                     }),
                 });
-        
-                console.log("🛜 Raw API Response:", response);
         
                 const result = await response.json();
                 console.log("📜 Parsed API Response:", result);
         
                 if (result.choices && result.choices[0] && result.choices[0].message) {
-
-                    //const formalText = result.choices[0].message.content;
                     const formalText = result.choices[0]?.message?.content.trim() || "";
+                    
+                    // Visually highlight that the text has been updated
+                    textarea.style.backgroundColor = "#f0f9ff";
+                    setTimeout(() => {
+                        textarea.style.backgroundColor = "";
+                    }, 500);
+                    
                     textarea.value = formalText;
                     
                     // Store the formalized result
                     chrome.storage.local.set({ formalizedResult: formalText });
-                    
-                    // Hide loading indicator
-                    loadingIndicator.style.display = "none";
                 } else {
                     console.error("API response missing expected data:", result);
-                    textarea.value = "Error: Could not fetch formalized text.";
-                    loadingIndicator.style.display = "none";
+                    // Keep the original text visible but show error
+                    loadingIndicator.innerText = "Error: Could not formalize text.";
+                    loadingIndicator.style.color = "red";
                 }
             } catch (error) {
                 console.error("API Request Failed:", error);
-                textarea.value = "Error: API request failed.";
-                loadingIndicator.style.display = "none";
+                loadingIndicator.innerText = "Error: API request failed.";
+                loadingIndicator.style.color = "red";
+            } finally {
+                // Hide loading indicator after process completes
+                setTimeout(() => {
+                    loadingIndicator.style.display = "none";
+                }, 1000);
             }
         } else {
             // No text selected and no previous result
@@ -78,7 +89,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Copy text to clipboard
     copyBtn.addEventListener("click", () => {
         navigator.clipboard.writeText(textarea.value);
-        alert("Text copied to clipboard!");
+        
+        // Visual feedback for copy
+        const originalText = copyBtn.innerText;
+        copyBtn.innerText = "Copied!";
+        setTimeout(() => {
+            copyBtn.innerText = originalText;
+        }, 1500);
     });
     
     // Apply text to the page - improved approach
@@ -136,6 +153,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             }, (results) => {
                 if (results && results[0] && results[0].result === false) {
                     alert("Couldn't apply changes. Try selecting text first or using the Copy button.");
+                } else {
+                    // Visual feedback for successful apply
+                    const originalText = applyBtn.innerText;
+                    applyBtn.innerText = "Applied!";
+                    setTimeout(() => {
+                        applyBtn.innerText = originalText;
+                    }, 1500);
                 }
             });
         });
