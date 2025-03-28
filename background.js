@@ -9,14 +9,13 @@ chrome.runtime.onInstalled.addListener(() => {
   
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "formalizeText" && info.selectionText) {
-        console.log("Selected Text:", info.selectionText);
-        // Store selected text and clear previous formalized result
-        chrome.storage.local.set({ 
-            selectedText: info.selectionText,
-            formalizedResult: null  // Clear previous result when new text is selected
-        }, () => {
-            // Open the popup immediately
-            chrome.action.openPopup();
-        });
+      // Open popup FIRST for instant visual feedback
+      chrome.action.openPopup();
+      
+      // Then store data asynchronously (won't block popup)
+      chrome.storage.local.set({
+        selectedText: info.selectionText,
+        formalizedResult: null
+      });
     }
   });

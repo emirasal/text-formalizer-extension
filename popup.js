@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const requestBody = {
                     messages: [{ 
                         role: "user", 
-                        content: `Make this more formal with minimal changes (no need to use unusual words). Do not change words unless necessary. If there are any errors on the sentence also fix them. Only give me the plain text of the sentence.: ${data.selectedText}` 
+                        content: `Make this more formal with minimal changes (no need to use unusual words do not change words unless necessary). If there are any errors on the sentence also fix them. If you cannot understand what it is just return the same input. Input may not be english if that is the case you should return the sentence with that language (do not translate to english). Only give me the plain text of the sentence.: ${data.selectedText}` 
                     }]
                 };
         
